@@ -1,18 +1,20 @@
-use std::fs::File;
-use std::io::Write;
 use anyhow::Result;
 use gumdrop::Options;
-use std::process::Command;
 use sailfish::TemplateOnce;
+use std::fs::File;
+use std::io::Write;
+use std::process::Command;
 use tectonic::latex_to_pdf;
-
 
 #[derive(Debug, Options)]
 struct CropOptions {
     #[options(free)]
     input: String,
 
-    #[options(no_short, help = "using `%%HiResBoundingBox` instead of `%%BoundingBox'")]
+    #[options(
+        no_short,
+        help = "using `%%HiResBoundingBox` instead of `%%BoundingBox'"
+    )]
     hires: bool,
 
     #[options(help = "print help message")]
@@ -38,7 +40,8 @@ fn main() -> Result<()> {
 
     let gs_path = find_ghostscript()?;
 
-    let gs_output = Command::new(gs_path).arg("-q")
+    let gs_output = Command::new(gs_path)
+        .arg("-q")
         .arg("-dBATCH")
         .arg("-dNOPAUSE")
         .arg("-sDEVICE=bbox")
@@ -47,12 +50,21 @@ fn main() -> Result<()> {
 
     let gs_stderr = String::from_utf8_lossy(&gs_output.stderr);
     let pages: Vec<_> = {
-        let prefix = if opts.hires { "%%HiResBoundingBox:" } else { "%%BoundingBox:" };
-        gs_stderr.lines().filter_map(
-            |line| if line.starts_with(prefix) {
-                Some(line.trim_start_matches(prefix).trim())
-            } else { None }
-        ).collect()
+        let prefix = if opts.hires {
+            "%%HiResBoundingBox:"
+        } else {
+            "%%BoundingBox:"
+        };
+        gs_stderr
+            .lines()
+            .filter_map(|line| {
+                if line.starts_with(prefix) {
+                    Some(line.trim_start_matches(prefix).trim())
+                } else {
+                    None
+                }
+            })
+            .collect()
     };
 
     // todo: get pdf version from pdf
@@ -67,9 +79,9 @@ fn main() -> Result<()> {
 
     // todo: process more carefully.
     if let Some((base, ext)) = opts.input.rsplit_once('.') {
-        let output_pdf = latex_to_pdf(&rendered).expect("Compile Failed!");
+        let output_pdf = latex_to_pdf(rendered).expect("Compile Failed!");
         let output_path = format!("{}-crop.{}", base, ext);
-        let mut output = File::create(&output_path)?;
+        let mut output = File::create(output_path)?;
         output.write_all(&output_pdf)?;
         output.flush()?;
     }
