@@ -1,0 +1,13 @@
+[package]
+name = "pdfcrop"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+hex = "0.4"
+sailfish = "0.6"
+anyhow = "1.0"
+gumdrop = "0.8"
+tectonic = "0.12.0"
